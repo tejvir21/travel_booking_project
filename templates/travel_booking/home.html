@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - Travel Booking{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container text-center">
+    <h1 class="display-4 mb-4">Find Your Perfect Journey</h1>
+    <p class="lead mb-0">Book flights, trains, and buses with ease</p>
+  </div>
+</section>
+
+<!-- Search Form -->
+<div class="container">
+  <div class="search-card">
+    <form method="GET" class="row g-3" id="searchForm">
+      <div class="col-md-3">
+        <label for="source" class="form-label">From</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+          <input
+            type="text"
+            class="form-control"
+            id="source"
+            name="source"
+            value="{{ search_data.source }}"
+            placeholder="Source city"
+            list="source-cities"
+          >
+          <datalist id="source-cities"></datalist>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <label for="destination" class="form-label">To</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
+          <input
+            type="text"
+            class="form-control"
+            id="destination"
+            name="destination"
+            value="{{ search_data.destination }}"
+            placeholder="Destination city"
+            list="destination-cities"
+          >
+          <datalist id="destination-cities"></datalist>
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <label for="travel_type" class="form-label">Type</label>
+        <select class="form-select" id="travel_type" name="travel_type">
+          <option value=""{% if not search_data.travel_type %} selected{% endif %}>All Types</option>
+          <option value="flight"{% if search_data.travel_type == 'flight' %} selected{% endif %}>Flight</option>
+          <option value="train"{% if search_data.travel_type == 'train' %} selected{% endif %}>Train</option>
+          <option value="bus"{% if search_data.travel_type == 'bus' %} selected{% endif %}>Bus</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label for="departure_date" class="form-label">Date</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+          <input
+            type="date"
+            class="form-control"
+            id="departure_date"
+            name="departure_date"
+            value="{{ search_data.departure_date }}"
+            min="{{ today|date:'Y-m-d' }}"
+          >
+        </div>
+      </div>
+
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary btn-custom w-100">
+          <i class="bi bi-search"></i> Search
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Travel Options -->
+<div class="container mt-5">
+  {% if travel_options %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Available Travel Options</h2>
+      <span class="badge bg-primary fs-6">{{ page_obj.paginator.count }} option{{ page_obj.paginator.count|pluralize }}</span>
+    </div>
+
+    <div class="row">
+      {% for option in travel_options %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+          <div class="card travel-card h-100">
+            <div class="card-body position-relative">
+              <span class="badge bg-{% if option.travel_type == 'flight' %}primary{% elif option.travel_type == 'train' %}success{% else %}warning{% endif %} travel-type-badge">
+  <i class="bi {% if option.travel_type == 'flight' %}bi-airplane{% elif option.travel_type == 'train' %}bi-train-front{% else %}bi-bus-front{% endif %}"></i>
+  {{ option.get_travel_type_display }}
+</span>
+
+              <h5 class="card-title">{{ option.source }} → {{ option.destination }}</h5>
+              <p class="text-muted mb-2">{{ option.operator }}</p>
+              <div class="row mb-3">
+                <div class="col-6">
+                  <small class="text-muted">Departure</small>
+                  <div class="fw-bold">{{ option.departure_datetime|date:"M d, Y" }}</div>
+                  <div class="text-primary">{{ option.departure_datetime|date:"g:i A" }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Duration</small>
+                  <div class="fw-bold">{{ option.get_duration }}</div>
+                  <div class="text-success">{{ option.available_seats }} seat{{ option.available_seats|pluralize }} left</div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="price-tag">₹{{ option.price }}</div>
+                <div>
+                  <a href="{% url 'travel_detail' option.travel_id %}" class="btn btn-outline-primary btn-sm me-2">View Details</a>
+                  {% if user.is_authenticated and option.is_available %}
+                    <a href="{% url 'book_travel' option.travel_id %}" class="btn btn-primary btn-sm">Book Now</a>
+                  {% elif not user.is_authenticated %}
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Login to Book</a>
+                  {% else %}
+                    <button class="btn btn-secondary btn-sm" disabled>Not Available</button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      <nav aria-label="Travel options pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?{% for k,v in search_data.items %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+          {% endif %}
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?{% for k,v in search_data.items %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?{% for k,v in search_data.items %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-search display-1 text-muted"></i>
+      <h3 class="mt-3">No travel options found</h3>
+      <p class="text-muted">Try adjusting your search criteria</p>
+      <a href="{% url 'home' %}" class="btn btn-primary btn-custom">Clear Filters</a>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function setupAutocomplete(id, listId) {
+    const input = document.getElementById(id), datalist = document.getElementById(listId);
+    input.addEventListener('input', () => {
+      const q = input.value;
+      if (q.length < 2) return;
+      fetch(`{% url 'search_cities' %}?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(data => {
+          datalist.innerHTML = '';
+          data.forEach(city => {
+            const o = document.createElement('option');
+            o.value = city;
+            datalist.appendChild(o);
+          });
+        });
+    });
+  }
+  setupAutocomplete('source','source-cities');
+  setupAutocomplete('destination','destination-cities');
+</script>
+{% endblock %}

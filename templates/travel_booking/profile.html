@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - Travel Booking{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <i class="bi bi-person-circle display-4"></i>
+                    <h2 class="mt-2 mb-0">My Profile</h2>
+                </div>
+                <div class="card-body p-5">
+                    <form method="post" id="profileForm">
+                        {% csrf_token %}
+                        
+                        {% if errors.general %}
+                            <div class="alert alert-danger">
+                                {{ errors.general }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control {% if errors.first_name %}is-invalid{% endif %}" 
+                                       id="first_name" name="first_name" value="{{ form_data.first_name|default:'' }}" required>
+                                {% if errors.first_name %}
+                                    <div class="invalid-feedback">
+                                        {{ errors.first_name }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control {% if errors.last_name %}is-invalid{% endif %}" 
+                                       id="last_name" name="last_name" value="{{ form_data.last_name|default:'' }}" required>
+                                {% if errors.last_name %}
+                                    <div class="invalid-feedback">
+                                        {{ errors.last_name }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control {% if errors.email %}is-invalid{% endif %}" 
+                                       id="email" name="email" value="{{ form_data.email|default:'' }}" required>
+                            </div>
+                            {% if errors.email %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.email }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input type="tel" class="form-control {% if errors.phone_number %}is-invalid{% endif %}" 
+                                       id="phone_number" name="phone_number" 
+                                       value="{{ form_data.phone_number|default:'' }}" 
+                                       placeholder="+91 9876543210">
+                            </div>
+                            {% if errors.phone_number %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.phone_number }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="date_of_birth" class="form-label">Date of Birth</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                                <input type="date" class="form-control {% if errors.date_of_birth %}is-invalid{% endif %}" 
+                                       id="date_of_birth" name="date_of_birth" 
+                                       value="{{ form_data.date_of_birth|default:'' }}"
+                                       max="{{ today|date:'Y-m-d' }}">
+                            </div>
+                            {% if errors.date_of_birth %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.date_of_birth }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="address" class="form-label">Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                <textarea class="form-control {% if errors.address %}is-invalid{% endif %}" 
+                                          id="address" name="address" rows="3" 
+                                          placeholder="Enter your complete address">{{ form_data.address|default:'' }}</textarea>
+                            </div>
+                            {% if errors.address %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.address }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-custom me-3">
+                                <i class="bi bi-check-circle"></i> Update Profile
+                            </button>
+                            <a href="{% url 'password_change' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-key"></i> Change Password
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Account Info -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body text-center">
+                            <i class="bi bi-calendar-check text-success display-6"></i>
+                            <h6 class="mt-2 mb-0">Member Since</h6>
+                            <p class="text-muted mb-0">{{ user.date_joined|date:"F Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body text-center">
+                            <i class="bi bi-ticket text-primary display-6"></i>
+                            <h6 class="mt-2 mb-0">Total Bookings</h6>
+                            <p class="text-muted mb-0">{{ user.bookings.count }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form validation
+    document.getElementById('profileForm').addEventListener('submit', function(e) {
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone_number').value;
+        const dateOfBirth = document.getElementById('date_of_birth').value;
+        
+        let hasErrors = false;
+        
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email && !emailRegex.test(email)) {
+            document.getElementById('email').classList.add('is-invalid');
+            hasErrors = true;
+        }
+        
+        // Phone validation (optional)
+        if (phone) {
+            const phoneRegex = /^[\+]?[1-9][\d\s\-\(\)]{7,15}$/;
+            if (!phoneRegex.test(phone)) {
+                document.getElementById('phone_number').classList.add('is-invalid');
+                hasErrors = true;
+            }
+        }
+        
+        // Date of birth validation
+        if (dateOfBirth) {
+            const birthDate = new Date(dateOfBirth);
+            const today = new Date();
+            
+            if (birthDate >= today) {
+                document.getElementById('date_of_birth').classList.add('is-invalid');
+                hasErrors = true;
+            }
+        }
+        
+        if (hasErrors) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Real-time validation
+    document.getElementById('email').addEventListener('blur', function() {
+        const email = this.value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (email && !emailRegex.test(email)) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    document.getElementById('phone_number').addEventListener('blur', function() {
+        const phone = this.value;
+        if (phone) {
+            const phoneRegex = /^[\+]?[1-9][\d\s\-\(\)]{7,15}$/;
+            if (!phoneRegex.test(phone)) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    document.getElementById('date_of_birth').addEventListener('change', function() {
+        const dateOfBirth = this.value;
+        if (dateOfBirth) {
+            const birthDate = new Date(dateOfBirth);
+            const today = new Date();
+            
+            if (birthDate >= today) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    // Set maximum date to today
+    document.getElementById('date_of_birth').setAttribute('max', new Date().toISOString().split('T')[0]);
+</script>
+{% endblock %}

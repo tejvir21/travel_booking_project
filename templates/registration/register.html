@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Travel Booking{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-person-plus display-4 text-primary"></i>
+                        <h2 class="mt-3">Create Account</h2>
+                        <p class="text-muted">Join us to start booking your journeys</p>
+                    </div>
+                    
+                    <form method="post" id="registrationForm">
+                        {% csrf_token %}
+                        
+                        {% if errors.general %}
+                            <div class="alert alert-danger">
+                                {{ errors.general }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control {% if errors.first_name %}is-invalid{% endif %}" 
+                                       id="first_name" name="first_name" value="{{ form_data.first_name|default:'' }}" required>
+                                {% if errors.first_name %}
+                                    <div class="invalid-feedback">
+                                        {{ errors.first_name }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-6">
+                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control {% if errors.last_name %}is-invalid{% endif %}" 
+                                       id="last_name" name="last_name" value="{{ form_data.last_name|default:'' }}" required>
+                                {% if errors.last_name %}
+                                    <div class="invalid-feedback">
+                                        {{ errors.last_name }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control {% if errors.username %}is-invalid{% endif %}" 
+                                       id="username" name="username" value="{{ form_data.username|default:'' }}" required>
+                            </div>
+                            {% if errors.username %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.username }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control {% if errors.email %}is-invalid{% endif %}" 
+                                       id="email" name="email" value="{{ form_data.email|default:'' }}" required>
+                            </div>
+                            {% if errors.email %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.email }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password1" class="form-label">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control {% if errors.password1 %}is-invalid{% endif %}" 
+                                       id="password1" name="password1" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if errors.password1 %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.password1 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <ul class="small mb-0">
+                                    <li>Your password can't be too similar to your other personal information.</li>
+                                    <li>Your password must contain at least 8 characters.</li>
+                                    <li>Your password can't be a commonly used password.</li>
+                                    <li>Your password can't be entirely numeric.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password2" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-shield-check"></i></span>
+                                <input type="password" class="form-control {% if errors.password2 %}is-invalid{% endif %}" 
+                                       id="password2" name="password2" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            {% if errors.password2 %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.password2 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-custom">
+                                <i class="bi bi-person-check"></i> Create Account
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <p class="mb-0">Already have an account? 
+                                <a href="{% url 'login' %}" class="text-decoration-none">Sign in here</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword1').addEventListener('click', function() {
+        const password = document.getElementById('password1');
+        const icon = this.querySelector('i');
+        if (password.type === 'password') {
+            password.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            password.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+
+    document.getElementById('togglePassword2').addEventListener('click', function() {
+        const password = document.getElementById('password2');
+        const icon = this.querySelector('i');
+        if (password.type === 'password') {
+            password.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            password.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+
+    // Real-time password match validation
+    document.getElementById('password2').addEventListener('input', function() {
+        const password1 = document.getElementById('password1').value;
+        const password2 = this.value;
+        
+        if (password2 && password1 !== password2) {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+        } else if (password2 && password1 === password2) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        } else {
+            this.classList.remove('is-invalid', 'is-valid');
+        }
+    });
+
+    // Username validation
+    document.getElementById('username').addEventListener('blur', function() {
+        const username = this.value;
+        const usernameRegex = /^[a-zA-Z0-9@.+_-]+$/;
+        
+        if (username && !usernameRegex.test(username)) {
+            this.classList.add('is-invalid');
+        } else if (username && username.length > 150) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    // Email validation
+    document.getElementById('email').addEventListener('blur', function() {
+        const email = this.value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (email && !emailRegex.test(email)) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+
+    // Password strength indicator
+    document.getElementById('password1').addEventListener('input', function() {
+        const password = this.value;
+        const strengthDiv = document.getElementById('passwordStrength');
+        
+        // Remove existing strength indicator
+        if (strengthDiv) {
+            strengthDiv.remove();
+        }
+        
+        if (password.length > 0) {
+            let strength = 0;
+            let strengthText = '';
+            let strengthClass = '';
+            
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            switch (strength) {
+                case 0:
+                case 1:
+                    strengthText = 'Very Weak';
+                    strengthClass = 'text-danger';
+                    break;
+                case 2:
+                    strengthText = 'Weak';
+                    strengthClass = 'text-warning';
+                    break;
+                case 3:
+                    strengthText = 'Fair';
+                    strengthClass = 'text-info';
+                    break;
+                case 4:
+                    strengthText = 'Good';
+                    strengthClass = 'text-success';
+                    break;
+                case 5:
+                    strengthText = 'Strong';
+                    strengthClass = 'text-success fw-bold';
+                    break;
+            }
+            
+            const strengthIndicator = document.createElement('div');
+            strengthIndicator.id = 'passwordStrength';
+            strengthIndicator.className = `small ${strengthClass}`;
+            strengthIndicator.innerHTML = `Password Strength: ${strengthText}`;
+            this.parentNode.parentNode.appendChild(strengthIndicator);
+        }
+    });
+</script>
+{% endblock %}

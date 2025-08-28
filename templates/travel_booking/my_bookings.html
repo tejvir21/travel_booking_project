@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings - Travel Booking{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-ticket-perforated"></i> My Bookings</h2>
+        <div class="d-flex gap-2">
+            <a href="?status=" class="btn btn-outline-primary{% if not status_filter %} active{% endif %}">All</a>
+            <a href="?status=confirmed" class="btn btn-outline-success{% if status_filter == 'confirmed' %} active{% endif %}">Confirmed</a>
+            <a href="?status=cancelled" class="btn btn-outline-danger{% if status_filter == 'cancelled' %} active{% endif %}">Cancelled</a>
+        </div>
+    </div>
+    
+    {% if bookings %}
+        <div class="row">
+            {% for booking in bookings %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <!-- Booking Status -->
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h6 class="card-subtitle text-muted">Booking #{{ booking.booking_id }}</h6>
+                                <span class="badge bg-{% if booking.status == 'confirmed' %}success{% else %}danger{% endif %}">
+                                    {{ booking.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            <!-- Travel Info -->
+                            <h5 class="card-title">
+                                {{ booking.travel_option.source }} → {{ booking.travel_option.destination }}
+                            </h5>
+                            
+                            <div class="mb-3">
+                                <span class="badge bg-{% if booking.travel_option.travel_type == 'flight' %}primary{% elif booking.travel_option.travel_type == 'train' %}success{% else %}warning{% endif %} me-2">
+                                    {% if booking.travel_option.travel_type == 'flight' %}
+                                        <i class="bi bi-airplane"></i>
+                                    {% elif booking.travel_option.travel_type == 'train' %}
+                                        <i class="bi bi-train-front"></i>
+                                    {% else %}
+                                        <i class="bi bi-bus-front"></i>
+                                    {% endif %}
+                                    {{ booking.travel_option.get_travel_type_display }}
+                                </span>
+                                <small class="text-muted">{{ booking.travel_option.operator }}</small>
+                            </div>
+                            
+                            <!-- Travel Details -->
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Departure</small>
+                                    <strong>{{ booking.travel_option.departure_datetime|date:"M d" }}</strong><br>
+                                    <small>{{ booking.travel_option.departure_datetime|date:"g:i A" }}</small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Passengers</small>
+                                    <strong>{{ booking.number_of_seats }}</strong><br>
+                                    <small>seat{{ booking.number_of_seats|pluralize }}</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Price -->
+                            <div class="text-center mb-3">
+                                <span class="h5 text-success">₹{{ booking.total_price }}</span>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'booking_detail' booking.booking_id %}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                                {% if booking.can_cancel %}
+                                    <a href="{% url 'cancel_booking' booking.booking_id %}" 
+                                       class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-x-circle"></i> Cancel Booking
+                                    </a>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Booking Date -->
+                            <div class="text-center mt-2">
+                                <small class="text-muted">
+                                    Booked on {{ booking.booking_date|date:"M d, Y g:i A" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="Bookings pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+        
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-ticket display-1 text-muted"></i>
+            <h3 class="mt-3">No bookings found</h3>
+            <p class="text-muted">
+                {% if status_filter %}
+                    No {{ status_filter }} bookings to display.
+                {% else %}
+                    You haven't made any bookings yet.
+                {% endif %}
+            </p>
+            <a href="{% url 'home' %}" class="btn btn-primary btn-custom">
+                <i class="bi bi-search"></i> Search Travel Options
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

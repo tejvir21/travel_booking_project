@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking Details - Travel Booking{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-header bg-{% if booking.status == 'confirmed' %}success{% else %}danger{% endif %} text-white text-center py-4">
+                    <h2>
+                        <i class="bi bi-ticket-perforated"></i>
+                        Booking #{{ booking.booking_id }}
+                    </h2>
+                    <span class="badge bg-light text-dark fs-6">{{ booking.get_status_display }}</span>
+                </div>
+                <div class="card-body p-5">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h4>{{ booking.travel_option.source }} → {{ booking.travel_option.destination }}</h4>
+                            <p class="text-muted">{{ booking.travel_option.operator }}</p>
+                            <p>
+                                <span class="badge bg-{% if booking.travel_option.travel_type == 'flight' %}primary{% elif booking.travel_option.travel_type == 'train' %}success{% else %}warning{% endif %}">
+                                    {{ booking.travel_option.get_travel_type_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h3 class="text-success">₹{{ booking.total_price }}</h3>
+                            <p class="text-muted">{{ booking.number_of_seats }} seat{{ booking.number_of_seats|pluralize }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Departure</h6>
+                            <p>{{ booking.travel_option.departure_datetime|date:"M d, Y g:i A" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Arrival</h6>
+                            <p>{{ booking.travel_option.arrival_datetime|date:"M d, Y g:i A" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if booking.passenger_details %}
+                        <div class="mb-4">
+                            <h6>Passengers</h6>
+                            <ul>
+                                {% for passenger in booking.passenger_details %}
+                                    <li>{{ passenger }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <h6>Booking Information</h6>
+                        <p><strong>Booked on:</strong> {{ booking.booking_date|date:"M d, Y g:i A" }}</p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge bg-{% if booking.status == 'confirmed' %}success{% else %}danger{% endif %}">
+                                {{ booking.get_status_display }}
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <div class="text-center">
+                        {% if booking.can_cancel %}
+                            <a href="{% url 'cancel_booking' booking.booking_id %}" 
+                               class="btn btn-danger btn-custom me-3">
+                                <i class="bi bi-x-circle"></i> Cancel Booking
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'my_bookings' %}" class="btn btn-outline-primary btn-custom">
+                            <i class="bi bi-arrow-left"></i> Back to Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

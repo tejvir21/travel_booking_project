@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Travel - Travel Booking{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Travel Option Details -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{% if travel_option.travel_type == 'flight' %}airplane{% elif travel_option.travel_type == 'train' %}train-front{% else %}bus-front{% endif %}"></i>
+                        Travel Details
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <h3>{{ travel_option.source }} → {{ travel_option.destination }}</h3>
+                        <span class="badge bg-{% if travel_option.travel_type == 'flight' %}primary{% elif travel_option.travel_type == 'train' %}success{% else %}warning{% endif %} fs-6">
+                            {{ travel_option.get_travel_type_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="row text-center mb-4">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h5 class="text-muted mb-1">
+                                    <i class="bi bi-calendar-event"></i> Departure
+                                </h5>
+                                <div class="h5 text-primary">{{ travel_option.departure_datetime|date:"M d, Y" }}</div>
+                                <div class="text-success">
+                                    <i class="bi bi-clock"></i> {{ travel_option.departure_datetime|date:"g:i A" }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-muted mb-1">
+                                <i class="bi bi-calendar-check"></i> Arrival
+                            </h5>
+                            <div class="h5 text-primary">{{ travel_option.arrival_datetime|date:"M d, Y" }}</div>
+                            <div class="text-success">
+                                <i class="bi bi-clock-fill"></i> {{ travel_option.arrival_datetime|date:"g:i A" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <strong><i class="bi bi-hourglass-split"></i> Duration:</strong> 
+                            <span class="text-info">{{ travel_option.get_duration }}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong><i class="bi bi-people"></i> Available Seats:</strong> 
+                            <span class="text-success">{{ travel_option.available_seats }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <strong><i class="bi bi-building"></i> Operator:</strong> 
+                            <span>{{ travel_option.operator }}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong><i class="bi bi-currency-rupee"></i> Price per seat:</strong> 
+                            <span class="h5 text-success">₹{{ travel_option.price }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Booking Form -->
+        <div class="col-lg-6">
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-header bg-success text-white text-center py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-credit-card"></i> Complete Your Booking
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="bookingForm">
+                        {% csrf_token %}
+                        
+                        {% if errors.general %}
+                            <div class="alert alert-danger">
+                                {{ errors.general }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <label for="number_of_seats" class="form-label">
+                                <strong><i class="bi bi-person-plus"></i> Number of Seats</strong>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                <input type="number" class="form-control {% if errors.number_of_seats %}is-invalid{% endif %}" 
+                                       id="number_of_seats" name="number_of_seats" 
+                                       value="{{ form_data.number_of_seats|default:'1' }}" 
+                                       min="1" max="{{ travel_option.available_seats }}" required>
+                                <span class="input-group-text">seats</span>
+                            </div>
+                            {% if errors.number_of_seats %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.number_of_seats }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Maximum {{ travel_option.available_seats }} seat{{ travel_option.available_seats|pluralize }} available
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="passenger_names" class="form-label">
+                                <strong><i class="bi bi-people-fill"></i> Passenger Names</strong>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control {% if errors.passenger_names %}is-invalid{% endif %}" 
+                                      id="passenger_names" name="passenger_names" rows="4" 
+                                      placeholder="Enter passenger names (one per line)&#10;Example:&#10;John Doe&#10;Jane Smith" required>{{ form_data.passenger_names|default:'' }}</textarea>
+                            {% if errors.passenger_names %}
+                                <div class="text-danger small mt-1">
+                                    {{ errors.passenger_names }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Enter one passenger name per line. Number of names must match number of seats.
+                            </div>
+                        </div>
+                        
+                        <!-- Price Calculation -->
+                        <div class="card bg-light border-primary mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="bi bi-calculator"></i> Booking Summary</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="bi bi-currency-rupee"></i> Price per seat:</span>
+                                    <span class="fw-bold">₹{{ travel_option.price }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="bi bi-person"></i> Number of seats:</span>
+                                    <span class="fw-bold" id="selectedSeats">{{ form_data.number_of_seats|default:'1' }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span><i class="bi bi-percent"></i> Service charges:</span>
+                                    <span class="fw-bold">₹0</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong><i class="bi bi-cash-stack"></i> Total Amount:</strong>
+                                    <strong class="text-success fs-4" id="totalAmount">₹{{ travel_option.price }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Terms and Conditions -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input {% if errors.terms %}is-invalid{% endif %}" 
+                                       type="checkbox" id="terms" name="terms" required 
+                                       {% if form_data.terms_accepted %}checked{% endif %}>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the <a href="#" class="text-decoration-none">Terms and Conditions</a> 
+                                    and <a href="#" class="text-decoration-none">Cancellation Policy</a> <span class="text-danger">*</span>
+                                </label>
+                                {% if errors.terms %}
+                                    <div class="text-danger small mt-1">
+                                        {{ errors.terms }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                                <i class="bi bi-check-circle"></i> Confirm Booking
+                            </button>
+                            <a href="{% url 'travel_detail' travel_option.travel_id %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Details
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle"></i> Confirm Booking
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Please review your booking details:</strong></p>
+                <ul id="modalDetails">
+                    <!-- Details will be populated by JavaScript -->
+                </ul>
+                <p class="text-muted small">
+                    <i class="bi bi-info-circle"></i> 
+                    Once confirmed, you can cancel this booking up to 2 hours before departure.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="reviewAgain">
+                    <i class="bi bi-x"></i> Review Again
+                </button>
+                <button type="button" class="btn btn-success" id="finalConfirm">
+                    <i class="bi bi-check-circle"></i> Confirm & Book
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const seatsInput = document.getElementById('number_of_seats');
+    const selectedSeatsSpan = document.getElementById('selectedSeats');
+    const totalAmountSpan = document.getElementById('totalAmount');
+    const pricePerSeat = {{ travel_option.price }};
+    const passengerNamesTextarea = document.getElementById('passenger_names');
+    
+    function updateTotal() {
+        const seats = parseInt(seatsInput.value) || 1;
+        const total = seats * pricePerSeat;
+        selectedSeatsSpan.textContent = seats;
+        totalAmountSpan.textContent = '₹' + total.toLocaleString();
+    }
+    
+    seatsInput.addEventListener('input', updateTotal);
+    
+    // Auto-update passenger names placeholder
+    seatsInput.addEventListener('change', function() {
+        const seats = parseInt(this.value) || 1;
+        const examples = [];
+        for (let i = 1; i <= seats; i++) {
+            examples.push(`Passenger ${i}`);
+        }
+        passengerNamesTextarea.placeholder = `Enter ${seats} passenger name${seats > 1 ? 's' : ''} (one per line)\nExample:\n${examples.join('\n')}`;
+    });
+    
+    // Form validation and confirmation modal
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const seats = parseInt(seatsInput.value) || 0;
+        const passengerNames = passengerNamesTextarea.value.trim();
+        const passengerList = passengerNames.split('\n').filter(name => name.trim());
+        const termsAccepted = document.getElementById('terms').checked;
+        
+        // Reset validation classes
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        
+        let hasErrors = false;
+        
+        // Validation
+        if (seats < 1 || seats > {{ travel_option.available_seats }}) {
+            seatsInput.classList.add('is-invalid');
+            hasErrors = true;
+        }
+        
+        if (passengerList.length !== seats) {
+            passengerNamesTextarea.classList.add('is-invalid');
+            hasErrors = true;
+        }
+        
+        if (!termsAccepted) {
+            document.getElementById('terms').classList.add('is-invalid');
+            hasErrors = true;
+        }
+        
+        if (hasErrors) {
+            const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Booking';
+        
+            return false;
+        }
+        
+        // Populate confirmation modal
+        const modalDetails = document.getElementById('modalDetails');
+        modalDetails.innerHTML = `
+            <li><strong>Route:</strong> {{ travel_option.source }} → {{ travel_option.destination }}</li>
+            <li><strong>Date:</strong> {{ travel_option.departure_datetime|date:"M d, Y g:i A" }}</li>
+            <li><strong>Travel Type:</strong> {{ travel_option.get_travel_type_display }}</li>
+            <li><strong>Operator:</strong> {{ travel_option.operator }}</li>
+            <li><strong>Seats:</strong> ${seats}</li>
+            <li><strong>Passengers:</strong> ${passengerList.join(', ')}</li>
+            <li><strong>Total Amount:</strong> ₹${(seats * pricePerSeat).toLocaleString()}</li>
+        `;
+        
+        // Show confirmation modal
+        const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        modal.show();
+    });
+
+    // Review again
+    document.getElementById('reviewAgain').addEventListener('click', function() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+        modal.hide();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Booking';
+    });
+
+    // Final confirmation
+    document.getElementById('finalConfirm').addEventListener('click', function() {
+        // Hide modal and submit form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+        modal.hide();
+        
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+        
+        // Submit the form
+        document.getElementById('bookingForm').submit();
+    });
+    
+    // Real-time passenger name validation
+    passengerNamesTextarea.addEventListener('blur', function() {
+        const seats = parseInt(seatsInput.value) || 1;
+        const names = this.value.trim();
+        const nameList = names.split('\n').filter(name => name.trim());
+        
+        if (names && nameList.length !== seats) {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+        }
+    });
+    
+    // Initial update
+    updateTotal();
+});
+</script>
+{% endblock %}
