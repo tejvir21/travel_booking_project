@@ -24,7 +24,7 @@ A Django-based travel booking web application that allows users to search, book,
 1. Clone the repository:
    ```bash
    git clone https://github.com/tejvir21/travel_booking_project.git
-   cd your-repo
+   cd travel_booking_project
    ```
 
 2. Create and activate a virtual environment:
