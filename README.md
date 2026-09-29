@@ -1,6 +1,6 @@
 # Travel Booking Application
 
-A Django-based travel booking web application that allows users to search, book, and manage travel options (flights, trains, buses). Built with Bootstrap for a responsive, user-friendly interface and MySQL/TiDB compatibility.
+A Django-based travel booking web application for searching, booking, and managing flights, trains, and buses. It uses Django, PostgreSQL, and Bootstrap 5.
 
 ## Features
 
@@ -14,10 +14,10 @@ A Django-based travel booking web application that allows users to search, book,
 
 ## Technology Stack
 
-- Python 3.x, Django 4.x
-- Database: MySQL or TiDB (MySQL-compatible)
+- Python 3.x, Django 5.2
+- Database: PostgreSQL (connected with `DATABASE_URL`)
 - Frontend: Bootstrap 5, JavaScript, AJAX
-- Hosting: PythonAnywhere, AWS, or similar
+- PostgreSQL driver: psycopg 3
 
 ## Setup Instructions
 
@@ -42,7 +42,9 @@ A Django-based travel booking web application that allows users to search, book,
    ```
 
 4. Configure environment variables:
-   - Copy `env-example.txt` to `.env` and set your values (SECRET_KEY, DB credentials).
+   - Copy `.env.example` to `.env` (`copy .env.example .env` on Windows, or `cp .env.example .env` on macOS/Linux).
+   - Edit `.env` and set `SECRET_KEY`, `DATABASE_URL`, `DEBUG`, and `ALLOWED_HOSTS`.
+   - Create a PostgreSQL database and user matching `DATABASE_URL`. Keep `.env` private; do not commit it.
 
 5. Apply migrations:
    ```bash
@@ -66,36 +68,19 @@ A Django-based travel booking web application that allows users to search, book,
 
 9. Visit http://127.0.0.1:8000/ in your browser.
 
-## Deployment on PythonAnywhere
+## Deployment
 
-1. Push code to GitHub.
-2. Create a web app on PythonAnywhere (Manual config, Django, Python 3.x).
-3. Clone your repo in PythonAnywhere, set up a virtualenv, install requirements.
-4. Configure environment variables in the Web tab.
-5. Map `/static/` to your `staticfiles` directory and run `collectstatic`.
-6. Update WSGI file to point to `travel_project.settings`.
-7. Apply migrations and reload the web app.
+For production, configure `SECRET_KEY`, `DATABASE_URL`, and `ALLOWED_HOSTS` in the hosting provider's environment settings. Set `DEBUG=False`, run `python manage.py migrate` and `python manage.py collectstatic --noinput`, then configure the host to serve the `staticfiles` directory. Choose a platform that supports PostgreSQL connections.
 
 ## Database Configuration
 
-In `settings.py`:
-```python
-DATABASES = {
-  'default': {
-    'ENGINE': 'django.db.backends.mysql',
-    'NAME': config('DB_NAME'),
-    'USER': config('DB_USER'),
-    'PASSWORD': config('DB_PASSWORD'),
-    'HOST': config('DB_HOST'),
-    'PORT': config('DB_PORT'),
-    'OPTIONS': {
-      'ssl': {'ca': os.path.join(BASE_DIR, 'certs', 'ca.pem')},
-      'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-      'charset': 'utf8mb4',
-    },
-  }
-}
+The project loads `.env` and parses `DATABASE_URL` with `django-environ`. Use a PostgreSQL connection URL, for example:
+
+```text
+DATABASE_URL=postgresql://travel_user:password@localhost:5432/travel_booking
 ```
+
+URL-encode reserved characters in the username or password. `ALLOWED_HOSTS` is a comma-separated list of hostnames; `localhost` and `127.0.0.1` are included by default.
 
 ## Running Tests
 

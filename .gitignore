@@ -30,6 +30,8 @@ Thumbs.db
 # Migrations
 **/migrations/
 !**/migrations/__init__.py
+!travel_booking/migrations/
+!travel_booking/migrations/*.py
 
 # Node modules (if using frontend tools)
 node_modules/
